@@ -3,6 +3,9 @@ const fs = require("fs");
 const SHEET_URL =
     "https://script.google.com/macros/s/AKfycbxNiT8rPF5KsL13CZjhD2I85IrUiVoXQtKBjui_UQUk64o3OH-4GeZo0_CYryMsVPb8rA/exec";
 
+const SITE_URL =
+    "https://x-card-project.vercel.app";
+
 async function main() {
 
     const response = await fetch(SHEET_URL);
@@ -23,11 +26,11 @@ async function main() {
 <meta name="twitter:card" content="summary_large_image">
 
 <meta property="og:title" content="${item.title}">
-<meta property="og:description" content="${item.desc}">
-<meta property="og:image" content="https://あなたのURL/images/${item.image}">
+<meta property="og:description" content="${item.description}">
+<meta property="og:image" content="${SITE_URL}/images/${item.image}">
 
 <meta http-equiv="refresh"
-content="0; url=${item.target}">
+content="0; url=${item.target_URL}">
 
 </head>
 
