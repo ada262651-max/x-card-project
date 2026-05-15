@@ -3,16 +3,22 @@ const fs = require("fs");
 const SHEET_URL =
     "https://script.google.com/macros/s/AKfycbxNiT8rPF5KsL13CZjhD2I85IrUiVoXQtKBjui_UQUk64o3OH-4GeZo0_CYryMsVPb8rA/exec";
 
-const SITE_URL =
-    "https://x-card-project.vercel.app";
-
 async function main() {
 
-    const response = await fetch(SHEET_URL);
+    const response =
+        await fetch(SHEET_URL);
 
-    const items = await response.json();
+    const items =
+        await response.json();
 
     for (const item of items) {
+
+        const safeId = String(item.id)
+            .replace(/\.[^/.]+$/, "")
+            .replace(/[()]/g, "")
+            .replace(/\s+/g, "_")
+            .replace(/__+/g, "_")
+            .trim();
 
         const html = `
 <!DOCTYPE html>
@@ -27,7 +33,7 @@ async function main() {
 
 <meta property="og:title" content="${item.title}">
 <meta property="og:description" content="${item.description}">
-<meta property="og:image" content="${SITE_URL}/images/${item.image}">
+<meta property="og:image" content="${item.image_preview}">
 
 <meta http-equiv="refresh"
 content="0; url=${item.target_URL}">
@@ -43,11 +49,11 @@ content="0; url=${item.target_URL}">
 `;
 
         fs.writeFileSync(
-            `cards/${item.id}.html`,
+            `cards/${safeId}.html`,
             html
         );
 
-        console.log(`${item.id}.html 作成`);
+        console.log(`${safeId}.html 作成`);
     }
 }
 
