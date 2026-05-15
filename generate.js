@@ -7,7 +7,6 @@ const SITE_URL =
     "https://x-card-project.vercel.app";
 
 function makeSafeId(value) {
-
     return String(value)
         .replace(/\.[^/.]+$/, "")
         .replace(/[()]/g, "_")
@@ -17,53 +16,33 @@ function makeSafeId(value) {
 }
 
 async function main() {
-
-    const response =
-        await fetch(SHEET_URL);
-
-    const items =
-        await response.json();
+    const response = await fetch(SHEET_URL);
+    const items = await response.json();
 
     for (const item of items) {
+        const safeId = makeSafeId(item.id);
 
-        // HTML用safe id
-        const safeId =
-            makeSafeId(item.id);
-
-        // 画像は元ファイル名そのまま
         const imageUrl =
-            `${SITE_URL}/images/${item.image}`;
+            `${SITE_URL}/images/${encodeURIComponent(item.image)}`;
 
         const html = `
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-
 <meta charset="UTF-8">
 
 <title>${item.title}</title>
 
-<meta name="twitter:card"
-content="summary_large_image">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="${item.title}">
+<meta property="og:description" content="${item.description}">
+<meta property="og:image" content="${imageUrl}">
 
-<meta property="og:title"
-content="${item.title}">
-
-<meta property="og:description"
-content="${item.description}">
-
-<meta property="og:image"
-content="${imageUrl}">
-
-<meta http-equiv="refresh"
-content="0; url=${item.target_URL}">
-
+<meta http-equiv="refresh" content="0; url=${item.target_URL}">
 </head>
 
 <body>
-
 <h1>${item.title}</h1>
-
 </body>
 </html>
 `;
