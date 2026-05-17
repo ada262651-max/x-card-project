@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
 
 const SHEET_URL =
     "https://script.google.com/macros/s/AKfycbxNiT8rPF5KsL13CZjhD2I85IrUiVoXQtKBjui_UQUk64o3OH-4GeZo0_CYryMsVPb8rA/exec";
@@ -16,22 +17,7 @@ function makeSafeId(value) {
         .replace(/^_+|_+$/g, "");
 }
 
-function getImageExt(url) {
-    const cleanUrl = String(url).split("?")[0];
-    const ext = path.extname(cleanUrl).toLowerCase();
-
-    if (ext === ".jpg" || ext === ".jpeg" || ext === ".png" || ext === ".webp") {
-        return ext;
-    }
-
-    return ".jpg";
-}
-
-async function downloadImage(url, savePath) {
-    if (!url) {
-        return false;
-    }
-
+async function downloadImage(url) {
     const response = await fetch(url, {
         headers: {
             "User-Agent": "Mozilla/5.0"
@@ -39,15 +25,10 @@ async function downloadImage(url, savePath) {
     });
 
     if (!response.ok) {
-        console.log(`画像取得失敗: ${url}`);
-        return false;
+        throw new Error(`画像取得失敗: ${url}`);
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-
-    fs.writeFileSync(savePath, buffer);
-
-    return true;
+    return Buffer.from(await response.arrayBuffer());
 }
 
 async function main() {
@@ -63,13 +44,31 @@ async function main() {
         const safeId = makeSafeId(item.id);
 
         const originalImageUrl = item.image;
-        const ext = getImageExt(originalImageUrl);
 
-        const imageFileName = `${safeId}${ext}`;
-        const localImagePath = `images/${imageFileName}`;
+        // Xカード安定用にjpgへ統一
+        const imageFileName = `${safeId}.jpg`;
+        const localImagePath = path.join("images", imageFileName);
         const publicImageUrl = `${SITE_URL}/images/${imageFileName}`;
 
-        await downloadImage(originalImageUrl, localImagePath);
+        try {
+            const imageBuffer = await downloadImage(originalImageUrl);
+
+            await sharp(imageBuffer)
+                .resize(1200, 630, {
+                    fit: "cover",
+                    position: "center"
+                })
+                .blur(6)
+                .jpeg({
+                    quality: 88
+                })
+                .toFile(localImagePath);
+
+            console.log(`${imageFileName} 作成`);
+        } catch (error) {
+            console.log(error.message);
+            continue;
+        }
 
         const html = `
 <!DOCTYPE html>
@@ -99,7 +98,6 @@ async function main() {
         );
 
         console.log(`${safeId}.html 作成`);
-        console.log(`${imageFileName} 作成`);
     }
 }
 
