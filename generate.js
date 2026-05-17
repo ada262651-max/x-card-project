@@ -43,10 +43,22 @@ async function main() {
 
         const safeId = makeSafeId(item.id);
         const blurValue = Number(item.blur) || 6;
+        const updateVersion = Number(item.update) || 1;
 
-        const imageFileName = `${safeId}_b${blurValue}.jpg`;
-        const localImagePath = path.join("images", imageFileName);
-        const publicImageUrl = `${SITE_URL}/images/${imageFileName}`;
+        const imageFileName =
+            `${safeId}_b${blurValue}_u${updateVersion}.jpg`;
+
+        const cardFileName =
+            `${safeId}_u${updateVersion}.html`;
+
+        const localImagePath =
+            path.join("images", imageFileName);
+
+        const publicImageUrl =
+            `${SITE_URL}/images/${imageFileName}`;
+
+        const cardUrl =
+            `${SITE_URL}/cards/${cardFileName}`;
 
         try {
             const imageBuffer = await downloadImage(item.image);
@@ -84,7 +96,7 @@ async function main() {
 <meta property="og:image:secure_url" content="${publicImageUrl}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="${SITE_URL}/cards/${safeId}.html">
+<meta property="og:url" content="${cardUrl}">
 
 <meta http-equiv="refresh" content="0; url=${item.target_URL}">
 </head>
@@ -96,8 +108,8 @@ async function main() {
 </html>
 `;
 
-        fs.writeFileSync(`cards/${safeId}.html`, html);
-        console.log(`${safeId}.html 作成`);
+        fs.writeFileSync(`cards/${cardFileName}`, html);
+        console.log(`${cardFileName} 作成`);
     }
 }
 
