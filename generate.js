@@ -3,9 +3,6 @@ const fs = require("fs");
 const SHEET_URL =
     "https://script.google.com/macros/s/AKfycbxNiT8rPF5KsL13CZjhD2I85IrUiVoXQtKBjui_UQUk64o3OH-4GeZo0_CYryMsVPb8rA/exec";
 
-const SITE_URL =
-    "https://x-card-project.vercel.app";
-
 function makeSafeId(value) {
     return String(value)
         .replace(/\.[^/.]+$/, "")
@@ -22,8 +19,7 @@ async function main() {
     for (const item of items) {
         const safeId = makeSafeId(item.id);
 
-        const imageUrl =
-            `${SITE_URL}/images/${encodeURIComponent(item.image)}`;
+        const imageUrl = item.image;
 
         const html = `
 <!DOCTYPE html>
