@@ -1,7 +1,11 @@
 const fs = require("fs");
+const path = require("path");
 
 const SHEET_URL =
     "https://script.google.com/macros/s/AKfycbxNiT8rPF5KsL13CZjhD2I85IrUiVoXQtKBjui_UQUk64o3OH-4GeZo0_CYryMsVPb8rA/exec";
+
+const SITE_URL =
+    "https://x-card-project.vercel.app";
 
 function makeSafeId(value) {
     return String(value)
@@ -12,14 +16,60 @@ function makeSafeId(value) {
         .replace(/^_+|_+$/g, "");
 }
 
+function getImageExt(url) {
+    const cleanUrl = String(url).split("?")[0];
+    const ext = path.extname(cleanUrl).toLowerCase();
+
+    if (ext === ".jpg" || ext === ".jpeg" || ext === ".png" || ext === ".webp") {
+        return ext;
+    }
+
+    return ".jpg";
+}
+
+async function downloadImage(url, savePath) {
+    if (!url) {
+        return false;
+    }
+
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "Mozilla/5.0"
+        }
+    });
+
+    if (!response.ok) {
+        console.log(`画像取得失敗: ${url}`);
+        return false;
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    fs.writeFileSync(savePath, buffer);
+
+    return true;
+}
+
 async function main() {
+    fs.mkdirSync("cards", { recursive: true });
+    fs.mkdirSync("images", { recursive: true });
+
     const response = await fetch(SHEET_URL);
     const items = await response.json();
 
     for (const item of items) {
+        if (!item.id) continue;
+
         const safeId = makeSafeId(item.id);
 
-        const imageUrl = item.image;
+        const originalImageUrl = item.image;
+        const ext = getImageExt(originalImageUrl);
+
+        const imageFileName = `${safeId}${ext}`;
+        const localImagePath = `images/${imageFileName}`;
+        const publicImageUrl = `${SITE_URL}/images/${imageFileName}`;
+
+        await downloadImage(originalImageUrl, localImagePath);
 
         const html = `
 <!DOCTYPE html>
@@ -32,7 +82,7 @@ async function main() {
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:title" content="${item.title}">
 <meta property="og:description" content="${item.description}">
-<meta property="og:image" content="${imageUrl}">
+<meta property="og:image" content="${publicImageUrl}">
 
 <meta http-equiv="refresh" content="0; url=${item.target_URL}">
 </head>
@@ -49,6 +99,7 @@ async function main() {
         );
 
         console.log(`${safeId}.html 作成`);
+        console.log(`${imageFileName} 作成`);
     }
 }
 
